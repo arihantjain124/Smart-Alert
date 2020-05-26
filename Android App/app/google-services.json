@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "671666969920",
+    "firebase_url": "https://smartalert-68c88.firebaseio.com",
+    "project_id": "smartalert-68c88",
+    "storage_bucket": "smartalert-68c88.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:671666969920:android:cbf20b69d8a22e68f0aea5",
+        "android_client_info": {
+          "package_name": "com.idk.smartalert"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "671666969920-9cfhdp1cpffuujtoplp7vfllub2l309l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.idk.smartalert",
+            "certificate_hash": "6a72431113183d695360f187ca8e0aa4f5c8e5f2"
+          }
+        },
+        {
+          "client_id": "671666969920-sedkkm6aea42copii80kh091vicauln6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.idk.smartalert",
+            "certificate_hash": "a91f3b29ccf274b3fb6f8df38b256a6056861ccf"
+          }
+        },
+        {
+          "client_id": "671666969920-nv39p4cgid1g9berclr5m3nk82ace2ru.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBC5JKLzWWw7qpcEXx0bPzdYDejFUGg9bg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "671666969920-nv39p4cgid1g9berclr5m3nk82ace2ru.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
