@@ -1,0 +1,4 @@
+<resources>
+    <!-- Replace locally with a Google Maps Android API key restricted by package and SHA-1. -->
+    <string name="google_maps_key" translatable="false">YOUR_RESTRICTED_GOOGLE_MAPS_API_KEY</string>
+</resources>

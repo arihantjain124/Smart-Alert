@@ -17,14 +17,14 @@ SoftwareSerial Serial1(6, 7); // RX, TX
 unsigned long myChannelNumber = SECRET_CH_ID;
 const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
 String myStatus = "new entry";
-int DTG=0;
-int cali=0;
-int flag;
-int water=0;
-int countdown=5;
-int btnpin=2;
+int sensorToGroundCm = 0;
+bool isCalibrated = false;
+const int alarmLevelCm = 30;
+const unsigned long uploadIntervalMs = 20000UL;
+const int calibrationCountdownSeconds = 5;
+
 void setup() {
-  flag=0;
+  isCalibrated = false;
   pinMode(8, OUTPUT);
   pinMode(11, OUTPUT);
   pinMode(2, INPUT);
@@ -38,9 +38,9 @@ void setup() {
   
   // initialize serial for ESP module  
   Serial.print("Setting ESP8266 baudrate to ");
-  Serial.print(19200);
+  Serial.print(ESP_BAUDRATE);
   Serial.println("...");
-  Serial1.begin(19200);
+  Serial1.begin(ESP_BAUDRATE);
   //pinMode(btnpin , INPUT_PULLUP);
   //attachInterrupt(btnpin,pin_cali,HIGH);
   while (!Serial) {
@@ -59,10 +59,10 @@ void setup() {
   }
   Serial.println("found it!");
   Serial.println("Waiting For Calibration");
-  for(int i=0;i<countdown;i++){ 
+  for (int i = 0; i < calibrationCountdownSeconds; i++) {
   delay(1000);
   Serial.print("Calibration in ");
-  Serial.println(countdown-i);
+  Serial.println(calibrationCountdownSeconds - i);
   }
   digitalWrite(13,1);
   delay(800);
@@ -73,12 +73,11 @@ void setup() {
 }
 
 void loop() {
-  if(flag==1){
+  if (isCalibrated) {
   // Connect or reconnect to WiFi
   if(WiFi.status() != WL_CONNECTED){
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(SECRET_SSID);
-    while(WiFi.status() != WL_CONNECTED){
+    Serial.println("Attempting to connect to WiFi...");
+    while (WiFi.status() != WL_CONNECTED) {
       WiFi.begin(ssid, pass);  // Connect to WPA/WPA2 network. Change this line if using open or WEP network
       Serial.print(".");
       delay(2000);     
@@ -86,19 +85,23 @@ void loop() {
     Serial.println("\nConnected.");
   }
   //calling reader function to check current water level
-  reader();
-  /*lati=;
-  longi=;*/
-  // set the fields with the values
-  water=DTG-distance;
-  ThingSpeak.setField(1, water);
+  const int sensorToWaterCm = reader();
+  if (sensorToWaterCm < 0) {
+    Serial.println("No ultrasonic echo received; skipping upload.");
+    delay(uploadIntervalMs);
+    return;
+  }
+
+  // The sensor measures clearance; subtract it from the calibrated ground distance.
+  const int waterLevelCm = max(0, sensorToGroundCm - sensorToWaterCm);
+  ThingSpeak.setField(1, waterLevelCm);
   
   // figure out the status message
   // set the status
-  myStatus=String(water);
-  Serial.print(water);
+  myStatus = String(waterLevelCm);
+  Serial.print(waterLevelCm);
   delay(1000);
-  if (water >= 30)
+  if (waterLevelCm >= alarmLevelCm)
     alarm();
   ThingSpeak.setStatus(myStatus);
   // write to the ThingSpeak channel
@@ -110,16 +113,20 @@ void loop() {
     Serial.println("Problem updating channel. HTTP error code " + String(x));
   }
   
-  delay(2000); // Wait 2 seconds to update the channel again
+  delay(uploadIntervalMs); // ThingSpeak public channels accept updates no faster than every 15 seconds.
 }
 }
 void pin_cali(){
-    reader();
-    DTG=distance;
-    flag=1;
-    Serial.print("calibrating to ");
-    Serial.print(DTG);
-    Serial.println(" cms"); 
+    const int measuredDistance = reader();
+    if (measuredDistance < 0) {
+      Serial.println("Calibration failed: no ultrasonic echo received.");
+      return;
+    }
+    sensorToGroundCm = measuredDistance;
+    isCalibrated = true;
+    Serial.print("Calibrated sensor-to-ground distance: ");
+    Serial.print(sensorToGroundCm);
+    Serial.println(" cm");
 }
 void alarm(){
   for(int i=0;i<20;i++){

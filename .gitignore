@@ -1,0 +1,17 @@
+# Arduino secrets and local configuration
+Smart Alert/secrets.h
+Smart Alert/mqtt_esp8266/mqtt_secrets.h
+Android App/local.properties
+Android App/app/google-services.json
+Android App/app/src/debug/res/values/google_maps_api.xml
+Android App/app/src/release/res/values/google_maps_api.xml
+
+# Android build output and IDE state
+Android App/.gradle/
+Android App/build/
+Android App/app/build/
+Android App/.idea/
+*.iml
+
+# Operating-system files
+.DS_Store

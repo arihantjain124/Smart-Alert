@@ -4,12 +4,14 @@ apply plugin: 'com.google.gms.google-services'
 android {
     compileSdkVersion 28
     defaultConfig {
+        def alertsEndpoint = project.findProperty("ALERTS_ENDPOINT") ?: ""
         applicationId "com.idk.smartalert"
         minSdkVersion 21
         targetSdkVersion 28
         multiDexEnabled true
         versionCode 1
         versionName "1.0"
+        buildConfigField "String", "ALERTS_ENDPOINT", "\"${alertsEndpoint}\""
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

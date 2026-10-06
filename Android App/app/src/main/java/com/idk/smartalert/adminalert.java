@@ -1,9 +1,5 @@
 package com.idk.smartalert;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -11,69 +7,67 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.android.volley.RequestQueue;
-import com.android.volley.Request;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
-
+/** Sends administrator alerts through a trusted server-side endpoint. */
 public class adminalert extends AppCompatActivity {
-EditText title,message;
-    final private String FCM_API = "https://fcm.googleapis.com/fcm/send";
-    final private String serverKey = "key=" + "AAAAnGJ4nUA:APA91bHVtdEeWz-7QNksQ3i0vuzEtWz-Xk0ahEPmZxFj4_qDOq-mhz0dsd5JTEcP4_0zwz0Myrj26dFJlNaKJ2L6m_LnwivmQSfm8QKFa78xfXtMihuX7LQJ0LtqkbZjMrJ_dwDiACjk";
-    final private String contentType = "application/json";
-    final String TAG = "NOTIFICATION TAG";
-    Button btn;
-    String NOTIFICATION_TITLE;
-    String NOTIFICATION_MESSAGE;
-    String TOPIC;
+    private static final String TAG = "NOTIFICATION TAG";
+    private final String alertsEndpoint = BuildConfig.ALERTS_ENDPOINT;
+
+    private EditText title;
+    private EditText message;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_adminalert);
-        title=findViewById(R.id.editText3);
-        message=findViewById(R.id.editText2);
-        btn=findViewById(R.id.button);
+
+        title = findViewById(R.id.editText3);
+        message = findViewById(R.id.editText2);
+        Button sendButton = findViewById(R.id.button);
         FirebaseMessaging.getInstance().subscribeToTopic("news");
 
-        btn.setOnClickListener(new View.OnClickListener() {
+        sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                TOPIC = "/topics/news"; //topic must match with what the receiver subscribed to
-                NOTIFICATION_TITLE = title.getText().toString();
-                NOTIFICATION_MESSAGE = message.getText().toString();
-
-                JSONObject notification = new JSONObject();
-                JSONObject notifcationBody = new JSONObject();
-                try {
-                    notifcationBody.put("title", NOTIFICATION_TITLE);
-                    notifcationBody.put("message", NOTIFICATION_MESSAGE);
-
-                    notification.put("to", TOPIC);
-                    notification.put("data", notifcationBody);
-                } catch (JSONException e) {
-                    Log.e(TAG, "onCreate: " + e.getMessage() );
-                }
-                sendNotification(notification);
+            public void onClick(View view) {
+                sendAlert();
             }
         });
     }
-    private void sendNotification(JSONObject notification) {
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(FCM_API, notification,
+
+    private void sendAlert() {
+        if (alertsEndpoint.isEmpty()) {
+            Toast.makeText(this, "Configure ALERTS_ENDPOINT before sending alerts.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        JSONObject data = new JSONObject();
+        JSONObject requestBody = new JSONObject();
+        try {
+            data.put("title", title.getText().toString().trim());
+            data.put("message", message.getText().toString().trim());
+            data.put("topic", "news");
+            requestBody.put("data", data);
+        } catch (JSONException exception) {
+            Log.e(TAG, "Could not build alert payload", exception);
+            return;
+        }
+
+        JsonObjectRequest request = new JsonObjectRequest(
+                alertsEndpoint,
+                requestBody,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        Log.e(TAG, "onResponse: " + response.toString());
+                        Log.d(TAG, "Alert accepted: " + response);
                         title.setText("");
                         message.setText("");
                     }
@@ -81,18 +75,11 @@ EditText title,message;
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(adminalert.this, "Request error"+error.toString(), Toast.LENGTH_LONG).show();
-                        Log.i(TAG, "onErrorResponse: Didn't work"+error.toString());
+                        Log.e(TAG, "Alert request failed", error);
+                        Toast.makeText(adminalert.this, "Could not send alert.", Toast.LENGTH_LONG).show();
                     }
-                }){
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                params.put("Authorization", serverKey);
-                params.put("Content-Type", contentType);
-                return params;
-            }
-        };
-        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+                }
+        );
+        MySingleton.getInstance(getApplicationContext()).addToRequestQueue(request);
     }
 }
